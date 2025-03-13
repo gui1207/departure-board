@@ -1,0 +1,176 @@
+# Departure Board Project
+
+## Overview
+
+This project is a fork of the excellent [Bus Departure Board](https://github.com/jfoot/Bus-Departure-Board) created by Jonathan Foot. His innovative work in creating a physical departure board using a Raspberry Pi and LED display has been the foundation and inspiration for this enhanced version.
+
+This personal project represents a comprehensive refactoring and expansion of the original codebase, developed with the assistance of Claude AI to improve architecture and implement new features.
+
+### Enhancements
+- Simplified codebase with improved modularity and abstraction
+- Streamlined service implementation interface for easier integration of new transport APIs
+- Enhanced error handling and recovery mechanisms
+- Optimized display rendering and animations
+- Improved configuration management
+
+### Current Services
+- Transport for London (TfL) - Live bus and tube departures
+
+### New Features
+- RESTful API for remote board control and station management
+- iOS companion app:
+  - Interactive London transport map
+  - Station and stop discovery
+  - Real-time departure information
+  - Remote board control through REST API integration
+  - Intuitive station selection and display management
+  - You can found more info about the iOS app on this repo:[Next Stop App](https://github.com/gui1207/tbd)
+
+## Raspberry Pi Setup
+
+### Hardware Requirements
+- Raspberry Pi Zero 2W
+- 3.2-inch OLED Display (256x64 SPI)
+- Power Button (Optional)
+- Power Supply - UPS HAT (Optional)
+
+### System Preparation
+
+#### 1. Operating System
+- Install Raspberry Pi OS Lite (64-bit)
+- Configure SSH and Wi-Fi during installation
+
+#### 2. System Configuration
+```bash
+# Update system
+sudo apt update && sudo apt full-upgrade -y
+
+# Enable SPI interface
+sudo raspi-config
+# Navigate to: Interfacing Options > SPI > Enable
+
+# Add user to SPI and GPIO groups
+sudo usermod -a -G spi,gpio pi
+
+# Install system dependencies
+sudo apt install -y \
+  python3-dev \
+  python3-pip \
+  build-essential \
+  libopenjp2-7 \
+  libfreetype6-dev \
+  libjpeg-dev \
+  libtiff6
+
+# Optional - only for development with pygame emulator
+sudo apt install -y \
+  libsdl2-dev \
+  libsdl2-image-dev \
+  libsdl2-mixer-dev \
+  libsdl2-ttf-dev
+```
+
+### Project Setup
+
+#### 1. Clone Repository
+```bash
+git clone [YOUR_REPOSITORY_URL]
+cd departure-board
+```
+
+#### 2. Create Virtual Environment
+```bash
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Python dependencies
+pip install -r requirements.txt
+```
+
+#### 3. Run the Application
+```bash
+# Test run
+python3 main.py -k YOUR_API_KEY -s STATION_ID 
+```
+
+#### 4. Auto-start Configuration
+Create systemd service file and configure auto-start:
+
+```bash
+# Create service file
+sudo nano /etc/systemd/system/departure-board.service
+
+# Add configuration to file:
+[Unit]
+Description=Departure Board Service
+After=network.target
+
+[Service]
+ExecStart=/home/pi/departure-board/venv/bin/python3 /home/pi/departure-board/main.py -k YOUR_API_KEY -s STATION_ID -e none
+WorkingDirectory=/home/pi/departure-board
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+
+# Enable and start service
+sudo systemctl enable departure-board
+sudo systemctl start departure-board
+
+# Check status
+sudo systemctl status departure-board
+```
+
+#### 5. Display Shutdown 
+Create systemd service file to shutdown the diplay:
+
+```bash
+# Create service file
+sudo nano /etc/systemd/system/display-shutdown.service
+
+# Add configuration to file:
+[Unit]
+Description=Display Shutdown Service
+DefaultDependencies=no
+Before=shutdown.target reboot.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/pi/departure-board/venv/bin/python3 /home/pi/departure-board/display-shutdown.py
+TimeoutSec=5
+
+[Install]
+WantedBy=shutdown.target reboot.target
+
+# Enable and start service
+sudo systemctl daemon-reload
+sudo systemctl enable display-shutdown
+
+# Check status
+sudo systemctl status display-shutdown
+```
+
+### Troubleshooting
+- Verify SPI connection
+- Check API key and station ID
+- Ensure all dependencies are installed
+
+### OLED Display - Wiring & Configuration
+Refer to `oled-display-tutorial.md` for detailed wiring instructions.
+
+### Power Button - Wiring & Configuration
+Refer to `power-button-tutorial.md` for detailed wiring instructions.
+
+### UPS HAT - Installation & Usage
+Refer to `ups-hat-tutorial.md` for detailed setup and configuration instructions.
+
+## Contributing
+- Fork repository
+- Create feature branches
+- Submit pull requests
+
+## License
+[Specify your license]
