@@ -1,6 +1,6 @@
 from datetime import datetime
 import json 
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from ..common.base_service import LiveTime, LiveTimeStud, BaseService
 
 class TflTime(LiveTime):
@@ -92,7 +92,11 @@ class TflService(BaseService):
             if args.APIKey:
                 url += f"?app_key={args.APIKey}"
 
-            with urlopen(url) as conn:
+            req = Request(url)
+            req.add_header('User-Agent', 'Mozilla/5.0')
+            req.add_header('Accept', '*/*')
+            
+            with urlopen(req) as conn:
                 tempServices = json.loads(conn.read())
                 
                 # First sort by arrival time
@@ -115,5 +119,5 @@ class TflService(BaseService):
                 return services
 
         except Exception as e:
-            print(f"GetData() ERROR: {str(e)}")
+            print(f"GetData() - Error: {str(e)}")
             return []
